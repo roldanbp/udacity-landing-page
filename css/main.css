@@ -335,6 +335,10 @@
     display: flex;
 }
 
+.active {
+    background-color: #9d847630;
+}
+
 @keyframes fadeInServices {
     0% {
            opacity: 0;
@@ -471,5 +475,9 @@
 @media(min-width: 600px) and (max-width: 1000px) {
     .header__mid-img {
         height: 440px;
+    }
+
+    .content__container-info-img {
+        height: 150px;
     }
 }

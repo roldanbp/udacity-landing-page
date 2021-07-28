@@ -3,7 +3,7 @@ const headerSection = document.querySelector("#home-section");
 const servicesSection = document.querySelector("#services-section");
 const visionSection = document.querySelector("#vision-section");
 const contactSection = document.querySelector("#contact-section");
-const parent = document.querySelector("#wrapper-parent");
+const parent = document.querySelector("body");
 
 // Header elements
 const menuTopContainer = document.querySelector(".header__top");
@@ -11,6 +11,7 @@ const menuContainer = document.querySelector("#header__top-nav");
 const menuCollapsable = document.querySelector("#header__top-icon-menu");
 const menuCollapsableExit = document.querySelector("#header__top-icon-menu-exit");
 
+// constants
 const SECTION_TOP_BOT_SPACE = 80;
 const SECTION_LEFT_RIGHT_SPACE = 240;
 const menuItemsDummy = ["Home", "Services", "Vision", "Contact"];
@@ -19,6 +20,10 @@ let listMenu;
 let menuContainerCollapsable;
 
 
+/**
+ * Create unordered list base on the quantity of item that menuItemsDummy has
+ * @param {String} className
+ */
 const createListMenu = (className) => {
   const listContainer = document.createElement("ul");
   listContainer.className = className;
@@ -49,17 +54,6 @@ const buildDynamicNavigation = () => {
 buildDynamicNavigation();
 
 /**
- * Remove class to the element
- * @param {*} className - class that you want remove.
- */
-const removeClass = className => {
-  const section = document.querySelector(`.${className}`);
-  if (section) {
-    section.classList.remove(className);
-  }
-}
-
-/**
  * Creating img element to active sections
  */
  const buildActiveSectionImage = () => {
@@ -71,36 +65,6 @@ const removeClass = className => {
 
   return img;
  }
-
- /**
-  * Set class and image to active section
-  * @param {*} activeSection
-  */
-const setSectionActive = (activeSection) => {
-
-  const titleContainer = activeSection.querySelector("#content__container-title");
-  activeSection.classList.add("active-section");
-  const activeImage = buildActiveSectionImage();
-  if(titleContainer) {
-    titleContainer.insertBefore(activeImage, titleContainer.children[0]);
-  }
-
-}
-
-
- /**
-  * Remove class and image to active section
-  * @param {*} activeSection
-  */
-const removeSectionActive = () => {
-    const images = document.querySelectorAll("#active-section-img");
-    removeClass("active-section")
-    if (images && images.length > 0) {
-      for (const image of images) {
-        image.remove();
-      }
-  }
-}
 
 /**
  * Calculate the hieght size of the menu
@@ -120,23 +84,12 @@ const scrollToSection = section => {
     return section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-//window.onscroll = function() {buildStickyMenu()};
-
 /**
- *  Set Sticky class to the Menu it isn't in the viewport
+ * Validate  which section should be scroll
+ * @param {*} event
  */
-const setStickyElement = (element) => {
-  element.classList.add("sticky", "background-sticky");
-}
-
-/**
- *  Remove Sticky class to the Menu it isn't in the viewport
- */
-const removeStickyElement = (element) => {
-  element.classList.remove("sticky", "background-sticky");
-}
-
 const validateScrollToSection = (event) => {
+  event.preventDefault();
   const navMenuPrefix = "nav-menu"
   switch (event.target.id) {
     case document.querySelector(`#${navMenuPrefix}-home`).id:
@@ -154,14 +107,21 @@ const validateScrollToSection = (event) => {
   }
 }
 
+/**
+ * Set the display atribute to elements.
+ * @param {Element, Element, Element}
+ */
 const setMenuIconConfigs = ({menuContainerDisplay, menuCollapsableDisplay, menuCollapsableExitDisplay}) => {
   menuContainerCollapsable.style.display = menuContainerDisplay;
   menuCollapsable.style.display = menuCollapsableDisplay;
   menuCollapsableExit.style.display = menuCollapsableExitDisplay;
 }
 
+/**
+ * Listener to handle the event click when the user press Menu Icon
+ */
 menuCollapsable.addEventListener('click', () => {
-
+  event.preventDefault();
   // if the element exists it appears/disappear through CSS
   if(document.querySelector("#header__top-collapsable-menu")){
     setMenuIconConfigs({menuContainerDisplay: "flex", menuCollapsableDisplay: "none", menuCollapsableExitDisplay:"flex"})
@@ -181,23 +141,63 @@ menuCollapsable.addEventListener('click', () => {
   menuContainerCollapsable.addEventListener('click', () => setMenuIconConfigs({menuContainerDisplay: "none", menuCollapsableDisplay: "flex", menuCollapsableExitDisplay:"none"}));
 });
 
-menuCollapsableExit.addEventListener('click', () => setMenuIconConfigs({menuContainerDisplay: "none", menuCollapsableDisplay: "flex", menuCollapsableExitDisplay:"none"}));
+/**
+ * Listener to handle the event click when the user press Menu Exit Icon
+ */
+menuCollapsableExit.addEventListener('click', (event) => {
+  event.preventDefault();
+  setMenuIconConfigs({menuContainerDisplay: "none", menuCollapsableDisplay: "flex", menuCollapsableExitDisplay:"none"})
+});
+
+/**
+ * Listener to handle the event click when the user press the menu elements
+ */
 listMenu.addEventListener('click', event => validateScrollToSection(event));
 
 /**
- * Callback to handle the active section
- * @param {Element} entries - intersected element.
+ * Check if the element is in the viewport
+ * @param {*} element
  */
-const intersectionCallback = (entries) => {
-  for (const entry of entries) {
-    if (entry.isIntersecting) {
-      return setSectionActive(entry.target);
-    }
-      return removeSectionActive()
+const isInViewPort = element => {
+  var rect = element.getBoundingClientRect();
+  return (
+    rect.top >= window.innerHeight - (window.innerHeight/2) ||
+    rect.bottom <= window.innerHeight - (window.innerHeight/2)
+  );
+}
+
+/**
+ * Set class sticky to menu when is scrolling
+ */
+const setStickyMenu = () => {
+  if (window.scrollY <= menuContainer.offsetTop) {
+    menuContainer.classList.remove("sticky");
+    menuContainer.classList.remove("sticky-background")
+    return;
   }
-};
-const observer = new IntersectionObserver(intersectionCallback, { threshold: 1});
-observer.observe(servicesSection);
-observer.observe(visionSection);
-observer.observe(contactSection);
+  menuContainer.classList.add("sticky")
+  menuContainer.classList.add("sticky-background")
+}
+
+/**
+ * Listener to handle scroll behaviors
+ */
+const sectionsList = [headerSection, servicesSection, visionSection, contactSection];
+document.addEventListener(
+  'scroll',
+  () => {
+      setStickyMenu();
+      sectionsList.forEach(section => {
+        if(section != headerSection) {
+        if(!isInViewPort(section)) {
+            section.classList.add("active");
+        } else {
+            section.classList.remove("active");
+        }
+      }});
+
+  }
+);
+
+
 
